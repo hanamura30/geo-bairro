@@ -172,25 +172,6 @@ def api_historico():
     return jsonify(buscar_historico(limite))
 
 
-@app.route("/api/leituras", methods=["GET", "POST"])
-def api_leituras():
-    if request.method == "POST":
-        dados = request.get_json(silent=True) or {}
-
-        salvar_leitura(
-            temperatura=dados.get("temperatura"),
-            umidade=dados.get("umidade"),
-            pressao=dados.get("pressao"),
-            qualidade_ar=dados.get("qualidade_ar"),
-            luminosidade=dados.get("luminosidade"),
-        )
-
-        return jsonify({"status": "ok"}), 201
-
-    # GET: histórico de leituras da estação, mais recente primeiro
-    limite = request.args.get("limite", default=20, type=int)
-    return jsonify(buscar_leituras(limite))
-
 
 @app.route("/api/leituras", methods=["GET", "POST"])
 def api_leituras():
