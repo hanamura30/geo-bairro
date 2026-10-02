@@ -9,12 +9,14 @@ Duas tabelas:
   estiver montado e enviando dados.
 """
 
+import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "geo_bairro.db"
+# No Render, usa /tmp/ (gravável); localmente, usa a pasta do projeto
+DB_PATH = Path("/tmp/geo_bairro.db") if os.path.exists("/tmp") else Path(__file__).parent / "geo_bairro.db"
 
 
 @contextmanager
