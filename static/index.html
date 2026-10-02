@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Geo Bairro - Painel de Monitoramento Meteorológico</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Comic+Neue:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="header-principal">
+      <div class="header-content">
+        <h1 class="logo-titulo">Geo Bairro</h1>
+        <p class="header-subtitulo">
+          Sistema Integrado de Geoposicionamento e Monitoramento Climático
+        </p>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <div id="mensagemErro" class="mensagem-erro" style="display: none"></div>
+
+      <!-- LOCALIZAÇÃO DA ESTAÇÃO: mapa e coordenadas antes dos valores dos sensores -->
+      <section class="container localizacao-section">
+        <h2 class="section-titulo">Localização da Estação</h2>
+        <div
+          id="mapaEstacao"
+          class="mapa-estacao"
+          aria-label="Mapa da localização da estação"
+        ></div>
+        <div class="coordenadas-legenda">
+          <span
+            ><strong>Latitude:</strong>
+            <span id="estacaoLatitude">—</span></span
+          >
+          <span
+            ><strong>Longitude:</strong>
+            <span id="estacaoLongitude">—</span></span
+          >
+          <span
+            ><strong>Referência:</strong>
+            <span id="estacaoLocalidade">Aguardando localização...</span></span
+          >
+        </div>
+      </section>
+
+      <!-- ESTAÇÃO LOCAL (ESP32): o que cada sensor é + leitura em tempo real -->
+      <section class="container estacao-section">
+        <div class="estacao-cabecalho">
+          <h2 class="section-titulo">Estação Local (ESP32)</h2>
+          <span class="leitura-atualizado" id="leituraAtualizadaEm"
+            >Aguardando dados...</span
+          >
+        </div>
+        <p class="sensores-intro">
+          Estação meteorológica construída com ESP32 (programado em
+          MicroPython). Cada card mostra o sensor, sua faixa de operação e a
+          leitura mais recente enviada pelo hardware.
+        </p>
+        <div class="sensores-grid">
+          <div class="sensor-card">
+            <h3 class="sensor-nome">DHT22</h3>
+            <p class="sensor-medida">Temperatura e Umidade do ar</p>
+            <ul class="sensor-specs">
+              <li><span>Temperatura</span><strong>-40°C a +80°C</strong></li>
+              <li>
+                <span>Umidade relativa</span><strong>0% a 100% UR</strong>
+              </li>
+              <li><span>Precisão</span><strong>±0,5°C / ±2 a 5% UR</strong></li>
+            </ul>
+            <div class="sensor-leitura">
+              <div class="sensor-leitura-item">
+                <span class="sensor-leitura-label">Temperatura agora</span>
+                <span class="sensor-leitura-valor" id="leitura-temperatura"
+                  >—</span
+                >
+              </div>
+              <div class="sensor-leitura-item">
+                <span class="sensor-leitura-label">Umidade agora</span>
+                <span class="sensor-leitura-valor" id="leitura-umidade">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sensor-card">
+            <h3 class="sensor-nome">BMP280</h3>
+            <p class="sensor-medida">Pressão atmosférica</p>
+            <ul class="sensor-specs">
+              <li><span>Pressão</span><strong>300 hPa a 1100 hPa</strong></li>
+              <li><span>Temperatura</span><strong>-40°C a +85°C</strong></li>
+              <li><span>Interface</span><strong>I²C / SPI</strong></li>
+            </ul>
+            <div class="sensor-leitura">
+              <div class="sensor-leitura-item">
+                <span class="sensor-leitura-label">Pressão agora</span>
+                <span class="sensor-leitura-valor" id="leitura-pressao">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sensor-card">
+            <h3 class="sensor-nome">MQ-135</h3>
+            <p class="sensor-medida">Qualidade do ar (gases poluentes)</p>
+            <ul class="sensor-specs">
+              <li>
+                <span>Gases-alvo</span
+                ><strong>NH₃, NOₓ, benzeno, fumaça, CO₂</strong>
+              </li>
+              <li>
+                <span>Faixa de detecção</span><strong>10 a 1000 ppm</strong>
+              </li>
+              <li><span>Interface</span><strong>Analógica (ADC)</strong></li>
+            </ul>
+            <div class="sensor-leitura">
+              <div class="sensor-leitura-item">
+                <span class="sensor-leitura-label">Qualidade do ar agora</span>
+                <span class="sensor-leitura-valor" id="leitura-qualidade-ar"
+                  >—</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="sensor-card">
+            <h3 class="sensor-nome">LDR</h3>
+            <p class="sensor-medida">Luminosidade (claro/escuro)</p>
+            <ul class="sensor-specs">
+              <li><span>Tipo</span><strong>Digital</strong></li>
+              <li>
+                <span>Tensão de Operação</span><strong>3,3 V a 5 V</strong>
+              </li>
+              <li><span>Saída</span><strong>0 (claro) / 1 (escuro)</strong></li>
+              <li><span>Interface</span><strong>GPIO (digital)</strong></li>
+            </ul>
+            <div class="sensor-leitura">
+              <div class="sensor-leitura-item">
+                <span class="sensor-leitura-label">Luminosidade agora</span>
+                <span class="sensor-leitura-valor" id="leitura-luminosidade"
+                  >—</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="container meteorologia-atual" style="margin-top: 1.5rem">
+        <h2 class="section-titulo">Boletim Meteorológico do Município</h2>
+        <div id="infografico" class="infografico-content"></div>
+      </div>
+
+      <div class="container previsao-container" style="margin-top: 1.5rem">
+        <h2 class="section-titulo">
+          Previsão do Tempo para os Próximos 7 Dias
+        </h2>
+        <div id="previsao" class="previsao-grid"></div>
+      </div>
+
+      <!-- HISTÓRICO: agora é o histórico de leituras da própria estação -->
+      <section class="container historico-section" style="margin-top: 1.5rem">
+        <h2 class="section-titulo">Histórico de Leituras da Estação</h2>
+        <div id="historicoLista" class="historico-lista"></div>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/script.js"></script>
+  </body>
+</html>
