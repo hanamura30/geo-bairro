@@ -192,3 +192,30 @@ def api_leituras():
     except Exception as e:
         print(f"❌ ERRO /api/leituras: {type(e).__name__} - {e}")
         return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/leituras/ultima")
+def api_leituras_ultima():
+    try:
+        leitura = buscar_ultima_leitura()
+        if not leitura:
+            return jsonify(None)
+        return jsonify(leitura)
+    except Exception as e:
+        print(f"❌ ERRO /api/leituras/ultima: {type(e).__name__} - {e}")
+        return jsonify({"erro": str(e)}), 500
+
+
+@app.route("/")
+def index():
+    return send_from_directory(app.static_folder, "index.html")
+
+
+# ===== EXECUÇÃO LOCAL =====
+
+def abrir_navegador():
+    webbrowser.open("http://127.0.0.1:5000")
+
+
+if __name__ == "__main__":
+    threading.Timer(1.2, abrir_navegador).start()
+    app.run(debug=True, host="0.0.0.0", port=5000, use_reloader=False)
