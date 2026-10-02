@@ -26,7 +26,13 @@ from database import (
     salvar_consulta,
     salvar_leitura,
 )
-
+# ===== FORÇA A CRIAÇÃO DAS TABELAS =====
+try:
+    from database import init_db
+    init_db()
+    print("✅ Banco de dados inicializado com sucesso!")
+except Exception as e:
+    print(f"❌ Erro ao inicializar banco: {e}")
 app = Flask(__name__, static_folder="static", static_url_path="")
 CORS(app)  # permite que o front-end (porta diferente, ex: Live Server 5500) chame a API
 
@@ -41,9 +47,10 @@ UF_NOMES = {
     "SC": "Santa Catarina", "SP": "São Paulo", "SE": "Sergipe",
     "TO": "Tocantins",
 }
-
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+
+
 
 
 def normalizar(texto):
@@ -105,6 +112,8 @@ def avaliar_risco(daily):
     if precip_max >= 40 or vento_max >= 35:
         return "medio"
     return "baixo"
+
+
 
 
 @app.route("/api/clima")
@@ -190,17 +199,13 @@ def api_leituras_ultima():
         return jsonify(None)
     return jsonify(leitura)
 
-
 @app.route("/")
 def index():
     return send_from_directory(app.static_folder, "index.html")
 
-
 def abrir_navegador():
     webbrowser.open("http://127.0.0.1:5000")
 
-
 if __name__ == "__main__":
-    init_db()   # ← ESSENCIAL
     threading.Timer(1.2, abrir_navegador).start()
     app.run(debug=True, host="0.0.0.0", port=5000, use_reloader=False)
