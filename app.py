@@ -125,52 +125,45 @@ def avaliar_risco(daily):
 
 @app.route("/api/clima")
 def api_clima():
-    estado = (request.args.get("estado") or "").strip()
-    cidade = (request.args.get("cidade") or "").strip()
-    bairro = (request.args.get("bairro") or "").strip()
-
-    if not estado or not cidade or not bairro:
-        return jsonify({"erro": "Preencha estado, município e bairro."}), 400
-
     try:
+        estado = (request.args.get("estado") or "").strip()
+        cidade = (request.args.get("cidade") or "").strip()
+        bairro = (request.args.get("bairro") or "").strip()
+
+        if not estado or not cidade or not bairro:
+            return jsonify({"erro": "Preencha estado, município e bairro."}), 400
+
         localidade = buscar_coordenadas(cidade, estado)
-    except requests.RequestException:
-        return jsonify({"erro": "Falha ao consultar o serviço de geolocalização."}), 502
+        if not localidade:
+            return jsonify({"erro": f'Não encontramos "{cidade} - {estado.upper()}".'}), 404
 
-    if not localidade:
-        return jsonify({
-            "erro": f'Não encontramos "{cidade} - {estado.upper()}". '
-                    "Verifique a grafia do município e a UF."
-        }), 404
-
-    try:
         dados_clima = buscar_previsao(localidade["latitude"], localidade["longitude"])
-    except requests.RequestException:
-        return jsonify({"erro": "Falha ao consultar o serviço de previsão do tempo."}), 502
+        risco = avaliar_risco(dados_clima["daily"])
+        nome_localidade = f'{localidade["name"]} - {localidade.get("admin1", estado.upper())}'
 
-    risco = avaliar_risco(dados_clima["daily"])
-    nome_localidade = f'{localidade["name"]} - {localidade.get("admin1", estado.upper())}'
+        salvar_consulta(
+            estado=estado.upper(),
+            cidade=cidade,
+            bairro=bairro,
+            municipio_encontrado=nome_localidade,
+            latitude=localidade["latitude"],
+            longitude=localidade["longitude"],
+            temperatura=dados_clima["current"]["temperature_2m"],
+            nivel_risco=risco,
+        )
 
-    salvar_consulta(
-        estado=estado.upper(),
-        cidade=cidade,
-        bairro=bairro,
-        municipio_encontrado=nome_localidade,
-        latitude=localidade["latitude"],
-        longitude=localidade["longitude"],
-        temperatura=dados_clima["current"]["temperature_2m"],
-        nivel_risco=risco,
-    )
-
-    return jsonify({
-        "nome_localidade": nome_localidade,
-        "bairro": bairro,
-        "latitude": localidade["latitude"],
-        "longitude": localidade["longitude"],
-        "current": dados_clima["current"],
-        "daily": dados_clima["daily"],
-        "risco": risco,
-    })
+        return jsonify({
+            "nome_localidade": nome_localidade,
+            "bairro": bairro,
+            "latitude": localidade["latitude"],
+            "longitude": localidade["longitude"],
+            "current": dados_clima["current"],
+            "daily": dados_clima["daily"],
+            "risco": risco,
+        })
+    except Exception as e:
+        print(f"❌ ERRO /api/clima: {type(e).__name__} - {e}")
+        return jsonify({"erro": str(e)}), 500
 
 
 @app.route("/api/historico")
@@ -199,20 +192,22 @@ def api_leituras():
     return jsonify(buscar_leituras(limite))
 
 
-@app.route("/api/leituras/ultima")
-def api_leituras_ultima():
-    leitura = buscar_ultima_leitura()
-    if not leitura:
-        return jsonify(None)
-    return jsonify(leitura)
+@app.route("/api/leituras", methods=["GET", "POST"])
+def api_leituras():
+    try:
+        if request.method == "POST":
+            dados = request.get_json(silent=True) or {}
+            salvar_leitura(
+                temperatura=dados.get("temperatura"),
+                umidade=dados.get("umidade"),
+                pressao=dados.get("pressao"),
+                qualidade_ar=dados.get("qualidade_ar"),
+                luminosidade=dados.get("luminosidade"),
+            )
+            return jsonify({"status": "ok"}), 201
 
-@app.route("/")
-def index():
-    return send_from_directory(app.static_folder, "index.html")
-
-def abrir_navegador():
-    webbrowser.open("http://127.0.0.1:5000")
-
-if __name__ == "__main__":
-    threading.Timer(1.2, abrir_navegador).start()
-    app.run(debug=True, host="0.0.0.0", port=5000, use_reloader=False)
+        limite = request.args.get("limite", default=20, type=int)
+        return jsonify(buscar_leituras(limite))
+    except Exception as e:
+        print(f"❌ ERRO /api/leituras: {type(e).__name__} - {e}")
+        return jsonify({"erro": str(e)}), 500

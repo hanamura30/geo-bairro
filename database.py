@@ -14,6 +14,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
+from datetime import datetime, timezone, timedelta
 
 # No Render, usa /tmp/ (gravável); localmente, usa a pasta do projeto
 DB_PATH = Path("/tmp/geo_bairro.db") if os.path.exists("/tmp") else Path(__file__).parent / "geo_bairro.db"
@@ -111,8 +112,10 @@ def buscar_historico(limite=20):
         return [dict(linha) for linha in linhas]
 
 
+# Fuso horário de Brasília (UTC-3)
+FUSO_BR = timezone(timedelta(hours=-3))
+
 def salvar_leitura(temperatura, umidade, pressao, qualidade_ar, luminosidade):
-    """Grava uma leitura enviada pela estação ESP32."""
     with conectar() as conn:
         conn.execute(
             """
@@ -126,7 +129,7 @@ def salvar_leitura(temperatura, umidade, pressao, qualidade_ar, luminosidade):
                 pressao,
                 qualidade_ar,
                 luminosidade,
-                datetime.now().isoformat(timespec="seconds"),
+                datetime.now(FUSO_BR).isoformat(timespec="seconds"),
             ),
         )
 
