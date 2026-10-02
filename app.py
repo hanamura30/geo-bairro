@@ -63,7 +63,7 @@ def buscar_coordenadas(cidade, uf):
     resp = requests.get(
         GEOCODING_URL,
         params={"name": cidade, "count": 10, "language": "pt", "format": "json"},
-        timeout=10,
+        timeout=30,
     )
     resp.raise_for_status()
     resultados = resp.json().get("results") or []
@@ -95,7 +95,7 @@ def buscar_previsao(lat, lon):
             "timezone": "auto",
             "forecast_days": 7,
         },
-        timeout=10,
+        timeout=30,
     )
     resp.raise_for_status()
     return resp.json()
