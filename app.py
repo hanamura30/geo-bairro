@@ -80,6 +80,9 @@ def buscar_coordenadas(cidade, uf):
                 break
 
     return escolhido or candidatos_br[0]
+except requests.RequestException as e:
+        print(f"❌ ERRO GEOCODIFICAÇÃO: {type(e).__name__} - {e}")   # ← DEBUG
+        raise
 
 
 def buscar_previsao(lat, lon):
@@ -99,6 +102,9 @@ def buscar_previsao(lat, lon):
     )
     resp.raise_for_status()
     return resp.json()
+except requests.RequestException as e:
+        print(f"❌ ERRO PREVISÃO: {type(e).__name__} - {e}")   # ← DEBUG
+        raise
 
 
 def avaliar_risco(daily):
