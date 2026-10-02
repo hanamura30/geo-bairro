@@ -14,7 +14,7 @@ import unicodedata
 import webbrowser
 from datetime import datetime
 
-import requests
+import httpx
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -59,53 +59,52 @@ def normalizar(texto):
     return texto.strip().lower()
 
 
+
 def buscar_coordenadas(cidade, uf):
     try:
-        resp = requests.get(
-            GEOCODING_URL,
-            params={"name": cidade, "count": 10, "language": "pt", "format": "json"},
-            timeout=30,
-        )
-        resp.raise_for_status()
-        resultados = resp.json().get("results") or []
-        candidatos_br = [r for r in resultados if r.get("country_code") == "BR"]
-        if not candidatos_br:
-            return None
+        with httpx.Client(timeout=30.0, http2=True) as client:
+            resp = client.get(
+                GEOCODING_URL,
+                params={"name": cidade, "count": 10, "language": "pt", "format": "json"},
+            )
+            resp.raise_for_status()
+            resultados = resp.json().get("results") or []
+            candidatos_br = [r for r in resultados if r.get("country_code") == "BR"]
+            if not candidatos_br:
+                return None
 
-        nome_estado = UF_NOMES.get(uf.upper())
-        escolhido = None
-        if nome_estado:
-            for r in candidatos_br:
-                if normalizar(r.get("admin1")) == normalizar(nome_estado):
-                    escolhido = r
-                    break
+            nome_estado = UF_NOMES.get(uf.upper())
+            escolhido = None
+            if nome_estado:
+                for r in candidatos_br:
+                    if normalizar(r.get("admin1")) == normalizar(nome_estado):
+                        escolhido = r
+                        break
 
-        return escolhido or candidatos_br[0]
-    except requests.RequestException as e:
+            return escolhido or candidatos_br[0]
+    except httpx.RequestError as e:
         print(f"❌ ERRO GEOCODIFICAÇÃO: {type(e).__name__} - {e}")
         raise
 
 
 def buscar_previsao(lat, lon):
     try:
-        resp = requests.get(
-            FORECAST_URL,
-            params={
-                "latitude": lat,
-                "longitude": lon,
-                "current": "temperature_2m,relative_humidity_2m,apparent_temperature,"
-                "precipitation,weather_code,wind_speed_10m",
-                "daily": "weather_code,temperature_2m_max,temperature_2m_min,"
-                        "precipitation_probability_max,wind_speed_10m_max",
-                "timezone": "auto",
-                "forecast_days": 7,
-            },
-            timeout=30,
-        )
-        resp.raise_for_status()
-        return resp.json()
-    except requests.RequestException as e:
-        print(f"❌ ERRO PREVISÃO: {type(e).__name__} - {e}")   # ← DEBUG
+        with httpx.Client(timeout=30.0, http2=True) as client:
+            resp = client.get(
+                FORECAST_URL,
+                params={
+                    "latitude": lat,
+                    "longitude": lon,
+                    "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m",
+                    "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max",
+                    "timezone": "auto",
+                    "forecast_days": 7,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()
+    except httpx.RequestError as e:
+        print(f"❌ ERRO PREVISÃO: {type(e).__name__} - {e}")
         raise
 
 
