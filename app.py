@@ -201,8 +201,6 @@ def abrir_navegador():
 
 
 if __name__ == "__main__":
-    init_db()
-    # Abre o navegador sozinho 1.2s depois de subir o servidor,
-    # assim quem for rodar não precisa digitar a URL na mão.
+    init_db()   # ← ESSENCIAL
     threading.Timer(1.2, abrir_navegador).start()
     app.run(debug=True, host="0.0.0.0", port=5000, use_reloader=False)

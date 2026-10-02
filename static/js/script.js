@@ -7,7 +7,7 @@
    em http://127.0.0.1:5000 para o site funcionar.
    ============================================================ */
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = '';
 
 // A busca por localidade foi removida da tela. O boletim e a previsão
 // abaixo usam esta localidade fixa — troque pelos dados da sua cidade.
