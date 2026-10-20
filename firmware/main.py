@@ -1,0 +1,138 @@
+from machine import Pin, ADC, I2C
+import dht
+import time
+import network
+import json
+from umqtt.simple import MQTTClient
+
+# --- Configuração Wi-Fi ---
+WIFI_SSID = "celular hanamura"
+WIFI_SENHA = "hanaique"
+
+# --- Configuração MQTT (Dashboard no GitHub Pages) ---
+MQTT_BROKER = "broker.hivemq.com"
+MQTT_CLIENT_ID = "ESP32_GeoBairro_Hanamura"
+MQTT_TOPIC = b"estacao/dados"
+
+# --- Configuração do Banco de Dados Local ---
+ARQUIVO_CSV = "dados.csv"
+
+# --- Inicialização dos sensores ---
+sensor_dht = dht.DHT22(Pin(5))
+ldr = Pin(23, Pin.IN)
+
+adc_mq = ADC(Pin(34))
+adc_mq.atten(ADC.ATTN_11DB)
+
+i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=100000)
+try:
+    from bme280_float import BME280
+    bmp = BME280(i2c=i2c)
+    print("BMP280 inicializado com sucesso.")
+except Exception as e:
+    print(f"Erro ao inicializar BMP280: {e}")
+    bmp = None
+
+def conectar_wifi():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    if not wlan.isconnected():
+        print("Conectando ao Wi-Fi...")
+        wlan.connect(WIFI_SSID, WIFI_SENHA)
+        tentativas = 0
+        while not wlan.isconnected() and tentativas < 20:
+            time.sleep(1)
+            tentativas += 1
+    if wlan.isconnected():
+        print(f"Wi-Fi conectado! IP: {wlan.ifconfig()[0]}")
+        return True
+    else:
+        print("Falha ao conectar ao Wi-Fi.")
+        return False
+
+def inicializar_csv():
+    try:
+        with open(ARQUIVO_CSV, 'r') as f:
+            pass # Arquivo já existe
+    except OSError:
+        # Cria o arquivo com o cabeçalho se ele não existir
+        with open(ARQUIVO_CSV, 'w') as f:
+            f.write("timestamp,temperatura,umidade,pressao,qualidade_ar,luminosidade\n")
+            print("Arquivo de banco de dados CSV criado.")
+
+def salvar_no_csv(payload):
+    try:
+        temp = payload.get("temperatura", "")
+        umid = payload.get("umidade", "")
+        pressao = payload.get("pressao", "")
+        ar = payload.get("qualidade_ar", "")
+        luz = payload.get("luminosidade", "")
+        
+        timestamp = int(time.time())
+        linha = f"{timestamp},{temp},{umid},{pressao},{ar},{luz}\n"
+        
+        with open(ARQUIVO_CSV, 'a') as f:
+            f.write(linha)
+        print("Salvo no CSV local.")
+    except Exception as e:
+        print(f"Erro ao salvar no CSV: {e}")
+
+def main():
+    conectar_wifi()
+    inicializar_csv()
+
+    print("Conectando ao Broker MQTT...")
+    client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER)
+    try:
+        client.connect()
+        print("MQTT Conectado com sucesso!")
+    except Exception as e:
+        print(f"Erro MQTT: {e}")
+        client = None
+
+    while True:
+        try:
+            sensor_dht.measure()
+            temp = sensor_dht.temperature()
+            umid = sensor_dht.humidity()
+
+            if bmp:
+                valores = bmp.values
+                pressao = float(valores[1].replace("hPa", ""))
+            else:
+                pressao = None
+
+            qualidade_ar = adc_mq.read()
+            luz = ldr.value()
+            
+            # Payload para o CSV e MQTT
+            payload = {
+                "temperatura": round(temp, 1),
+                "umidade": round(umid, 1),
+                "pressao": round(pressao, 2) if pressao else None,
+                "qualidade_ar": qualidade_ar,
+                "luminosidade": luz,
+            }
+            
+            print(f"Temp: {temp}°C | Umid: {umid}% | Pressão: {pressao} hPa | Ar: {qualidade_ar} | Luz: {luz}")
+
+            # 1. Salva no CSV
+            salvar_no_csv(payload)
+
+            # 2. Envia via MQTT
+            if client:
+                try:
+                    client.publish(MQTT_TOPIC, json.dumps(payload))
+                    print("Publicado no MQTT (Dashboard).")
+                except Exception as e:
+                    print(f"Erro MQTT: {e}")
+
+            print("-" * 40)
+
+        except OSError as e:
+            print(f"Erro na leitura: {e}")
+
+        time.sleep(10)
+
+if __name__ == "__main__":
+    main()
