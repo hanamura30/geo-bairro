@@ -200,7 +200,7 @@ async function carregarBoletimPadrao() {
     renderizarAlerta(risco, LOCAL_PADRAO.bairro);
   } catch (erro) {
     console.error(erro);
-    mostrarErro("Erro ao carregar previsão do tempo.");
+    //mostrarErro("Erro ao carregar previsão do tempo.");
   }
 }
 
