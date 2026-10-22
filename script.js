@@ -152,7 +152,7 @@ function renderizarHistorico(linhas) {
         ${l.umidade != null ? Math.round(l.umidade) + "%" : "—"} ·
         ${l.pressao != null ? Math.round(l.pressao) + " hPa" : "—"} ·
         ${l.qualidade_ar != null ? Math.round(l.qualidade_ar) + " ppm" : "—"} ·
-        ${l.luminosidade != null ? Math.round(l.luminosidade) + " lx" : "—"}
+        ${l.luminosidade != null ? l.luminosidade: "—"}
       </span>
       <span class="historico-data">${formatarDataHora(l.data_hora)}</span>
     </div>
