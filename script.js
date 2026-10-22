@@ -121,7 +121,7 @@ function renderizarLeituraSensor(leitura) {
     umidade: { id: "leitura-umidade", unidade: "%" },
     pressao: { id: "leitura-pressao", unidade: " hPa" },
     qualidade_ar: { id: "leitura-qualidade-ar", unidade: " ppm" },
-    luminosidade: { id: "leitura-luminosidade", unidade: " " },
+    luminosidade: { id: "leitura-luminosidade", unidade: "" },
   };
 
   Object.entries(CAMPO_LEITURA).forEach(([chave, { id, unidade }]) => {

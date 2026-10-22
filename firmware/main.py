@@ -57,7 +57,7 @@ def inicializar_csv():
     except OSError:
         # Cria o arquivo com o cabeçalho se ele não existir
         with open(ARQUIVO_CSV, 'w') as f:
-            f.write("timestamp,temperatura,umidade,pressao,qualidade_ar,luminosidade\n")
+            f.write("timestamp;temperatura;umidade;pressao;qualidade_ar;luminosidade\n")
             print("Arquivo de banco de dados CSV criado.")
 
 def salvar_no_csv(payload):
@@ -69,7 +69,7 @@ def salvar_no_csv(payload):
         luz = payload.get("luminosidade", "")
         
         timestamp = int(time.time())
-        linha = f"{timestamp},{temp},{umid},{pressao},{ar},{luz}\n"
+        linha = f"{timestamp};{temp};{umid};{pressao};{ar};{luz}\n"
         
         with open(ARQUIVO_CSV, 'a') as f:
             f.write(linha)
