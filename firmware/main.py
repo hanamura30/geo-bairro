@@ -33,6 +33,25 @@ except Exception as e:
     print(f"Erro ao inicializar BMP280: {e}")
     bmp = None
 
+def sincronizar_hora_ntp():
+    import ntptime
+    import utime
+    print("Sincronizando hora com a internet...")
+    try:
+        # Servidor do Google para pegar a hora certa
+        ntptime.host = 'pool.ntp.org'
+        ntptime.settime()
+        
+        #horário de Brasília (UTC-3)
+        # 3 horas = 3 * 3600 segundos
+        hora_atual = utime.time() - (3 * 3600)
+        
+        # Atualiza o relógio interno do ESP32
+        import machine
+        machine.RTC().datetime(utime.localtime(hora_atual))
+    except Exception as e:
+        print(f"Falha ao sincronizar hora (usando hora interna): {e}")
+
 def conectar_wifi():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -87,6 +106,7 @@ def salvar_no_csv(payload):
 
 def main():
     conectar_wifi()
+    sincronizar_hora_ntp()
     inicializar_csv()
 
     print("Conectando ao Broker MQTT...")
