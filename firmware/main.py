@@ -19,7 +19,7 @@ ARQUIVO_CSV = "dados.csv"
 
 # --- Inicialização dos sensores ---
 sensor_dht = dht.DHT22(Pin(5))
-ldr = Pin(23, Pin.IN)
+ldr = Pin(23, Pin.IN, Pin.PULL_UP)
 
 adc_mq = ADC(Pin(34))
 adc_mq.atten(ADC.ATTN_11DB)
@@ -55,21 +55,29 @@ def inicializar_csv():
         with open(ARQUIVO_CSV, 'r') as f:
             pass # Arquivo já existe
     except OSError:
-        # Cria o arquivo com o cabeçalho se ele não existir
+        # Novo cabeçalho com colunas de Data e Hora separadas
         with open(ARQUIVO_CSV, 'w') as f:
-            f.write("timestamp;temperatura;umidade;pressao;qualidade_ar;luminosidade\n")
-            print("Arquivo de banco de dados CSV criado.")
+            f.write("data;hora;temperatura;umidade;pressao;qualidade_ar;luminosidade\n")
+            print("Arquivo de banco de dados CSV criado (Data e Hora separadas).")
 
 def salvar_no_csv(payload):
     try:
-        temp = payload.get("temperatura", "")
-        umid = payload.get("umidade", "")
-        pressao = payload.get("pressao", "")
-        ar = payload.get("qualidade_ar", "")
-        luz = payload.get("luminosidade", "")
+        import utime
         
-        timestamp = int(time.time())
-        linha = f"{timestamp};{temp};{umid};{pressao};{ar};{luz}\n"
+        # Converte os valores para string e troca ponto por vírgula
+        temp = str(payload.get("temperatura", "")).replace(".", ",")
+        umid = str(payload.get("umidade", "")).replace(".", ",")
+        pressao = str(payload.get("pressao", "")).replace(".", ",")
+        ar = str(payload.get("qualidade_ar", ""))
+        luz = str(payload.get("luminosidade", ""))
+        
+        # Pega o tempo atual e formata separadamente
+        t = utime.localtime()
+        data_formatada = "{:02d}/{:02d}/{:04d}".format(t[2], t[1], t[0]) # Ex: 22/10/2026
+        hora_formatada = "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5]) # Ex: 17:30:00
+        
+        # Monta a linha com as colunas separadas por ponto e vírgula
+        linha = f"{data_formatada};{hora_formatada};{temp};{umid};{pressao};{ar};{luz}\n"
         
         with open(ARQUIVO_CSV, 'a') as f:
             f.write(linha)
@@ -104,6 +112,7 @@ def main():
 
             qualidade_ar = adc_mq.read()
             luz = ldr.value()
+            status_luz= "CLARO" if luz==0 else "ESCURO"
             
             # Payload para o CSV e MQTT
             payload = {
@@ -111,10 +120,10 @@ def main():
                 "umidade": round(umid, 1),
                 "pressao": round(pressao, 2) if pressao else None,
                 "qualidade_ar": qualidade_ar,
-                "luminosidade": luz,
+                "luminosidade": status_luz,
             }
             
-            print(f"Temp: {temp}°C | Umid: {umid}% | Pressão: {pressao} hPa | Ar: {qualidade_ar} | Luz: {luz}")
+            print(f"Temp: {temp}°C | Umid: {umid}% | Pressão: {pressao} hPa | Ar: {qualidade_ar} | Luz: {status_luz}")
 
             # 1. Salva no CSV
             salvar_no_csv(payload)
