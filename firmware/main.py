@@ -6,8 +6,8 @@ import json
 from umqtt.simple import MQTTClient
 
 # --- Configuração Wi-Fi ---
-WIFI_SSID = "celular hanamura"
-WIFI_SENHA = "hanaique"
+WIFI_SSID = "SEU WIFI"
+WIFI_SENHA = "SUA SENHA"
 
 # --- Configuração MQTT (Dashboard no GitHub Pages) ---
 MQTT_BROKER = "broker.hivemq.com"
