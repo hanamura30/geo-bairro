@@ -174,7 +174,7 @@ O frontend não exige servidor backend local rodando, pois consome dados via Web
 
 Abaixo está o funcionamento da nossa interface web, que consome os dados do broker MQTT e os exibe em tempo real:
 
-<img width="1500" height="1000" alt="Dashboard captando dados em tempo real" src="https://github.com/user-attachments/assets/367dcf49-e5c7-42fc-bec9-733a76f93260" />
+https://github.com/user-attachments/assets/e578ea43-09fb-42d7-aaf2-7a7d564a52ca
 
 Detalhes da montagem física na protoboard, destacando o ESP32 e a integração dos sensores:
 
