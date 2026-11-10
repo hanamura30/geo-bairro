@@ -1,6 +1,6 @@
 # Projeto GeoBairro - Estação Meteorológica para Cidades Inteligentes (IoT)
 
-**\[🔗 CLIQUE AQUI PARA ASSISTIR AO VÍDEO TÉCNICO DE DEMONSTRAÇÃO\]** *(https://drive.google.com/file/d/1WSdwq5R03OKUS3b-eThivCg7NLJddEKF/view?usp=sharing)*
+**\[ CLIQUE AQUI PARA ASSISTIR AO VÍDEO TÉCNICO DE DEMONSTRAÇÃO\]** *(https://drive.google.com/file/d/1WSdwq5R03OKUS3b-eThivCg7NLJddEKF/view?usp=sharing)*
 
 ## Visão Geral
 
